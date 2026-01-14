@@ -1,0 +1,400 @@
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import Quickshell
+import qs.Commons
+import qs.Services.Networking
+import qs.Services.UI
+import qs.Widgets
+Item {
+    id: root
+
+    property string label: ""
+    property var model: []
+
+    Layout.fillWidth: true
+    Layout.preferredHeight: ethIfacesList.implicitHeight + Style.marginM * 2
+    visible: root.model.length > 0
+
+    ColumnLayout {
+        id: ethIfacesList
+        visible: NetworkService.ethernetInterfaces && NetworkService.ethernetInterfaces.length > 0
+        width: parent.width
+        spacing: Style.marginXS
+
+        Repeater {
+            model: root.model
+
+            delegate: NBox {
+                id: ethItem
+
+                Layout.fillWidth: true
+                Layout.leftMargin: Style.marginXS
+                Layout.rightMargin: Style.marginXS
+                implicitHeight: ethItemColumn.implicitHeight + (Style.marginM * 2)
+                radius: Style.radiusM
+                border.width: Style.borderS
+                border.color: modelData.connected ? Color.mPrimary : Color.mOutline
+                color: modelData.connected ? Qt.rgba(Color.mPrimary.r, Color.mPrimary.g, Color.mPrimary.b, 0.05) : Color.mSurface
+
+                ColumnLayout {
+                    id: ethItemColumn
+                    width: parent.width - (Style.marginM * 2)
+                    x: Style.marginM
+                    y: Style.marginM
+                    spacing: Style.marginS
+
+                    // Main row matching Wi‑Fi card style
+                    RowLayout {
+                        id: ethHeaderRow
+                        Layout.fillWidth: true
+                        spacing: Style.marginS
+
+                        // Click handling for the whole header row is provided by a sibling MouseArea
+                        // anchored to this row (defined right after this RowLayout).
+
+                        NIcon {
+                            icon: "ethernet"
+                            pointSize: Style.fontSizeXXL
+                            color: modelData.connected ? Color.mPrimary : Color.mOnSurface
+                        }
+
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 2
+
+                            NText {
+                                text: modelData.ifname
+                                pointSize: Style.fontSizeM
+                                font.weight: modelData.connected ? Style.fontWeightBold : Style.fontWeightMedium
+                                color: Color.mOnSurface
+                                elide: Text.ElideRight
+                                Layout.fillWidth: true
+                            }
+
+                            RowLayout {
+                                spacing: Style.marginXS
+
+                                // Connected badge (mirrors Wi‑Fi chip)
+                                Rectangle {
+                                    visible: modelData.connected
+                                    color: Color.mPrimary
+                                    radius: height * 0.5
+                                    width: ethConnectedText.implicitWidth + (Style.marginS * 2)
+                                    height: ethConnectedText.implicitHeight + (Style.marginXXS * 2)
+
+                                    NText {
+                                        id: ethConnectedText
+                                        anchors.centerIn: parent
+                                        text: I18n.tr("common.connected")//已连接
+                                        pointSize: Style.fontSizeXXS
+                                        color: Color.mOnPrimary
+                                    }
+                                }
+                            }
+                        }
+
+                        // Info button on the right
+                        NIconButton {
+                            icon: "info-circle"
+                            baseSize: Style.baseWidgetSize * 0.7
+                            tooltipText: I18n.tr("common.info")//信息
+                            enabled: true
+                            onClicked: {
+                                if (NetworkService.activeEthernetIf === modelData.ifname && ethernetInfoExpanded) {
+                                    ethernetInfoExpanded = false;
+                                    return;
+                                }
+                                if (NetworkService.activeEthernetIf !== modelData.ifname) {
+                                    NetworkService.activeEthernetIf = modelData.ifname;
+                                    NetworkService.activeEthernetDetailsTimestamp = 0;
+                                }
+                                ethernetInfoExpanded = true;
+                                NetworkService.refreshActiveEthernetDetails();
+                            }
+                        }
+                    }
+
+                    // Click handling without anchors in a Layout-managed item
+                    TapHandler {
+                        target: ethHeaderRow
+                        onTapped: {
+                            if (NetworkService.activeEthernetIf === modelData.ifname && ethernetInfoExpanded) {
+                                ethernetInfoExpanded = false;
+                                return;
+                            }
+                            if (NetworkService.activeEthernetIf !== modelData.ifname) {
+                                NetworkService.activeEthernetIf = modelData.ifname;
+                                NetworkService.activeEthernetDetailsTimestamp = 0;
+                            }
+                            ethernetInfoExpanded = true;
+                            NetworkService.refreshActiveEthernetDetails();
+                        }
+                    }
+
+                    // Inline Ethernet details
+                    Rectangle {
+                        id: ethInfoInline
+                        visible: ethernetInfoExpanded && NetworkService.activeEthernetIf === modelData.ifname
+                        Layout.fillWidth: true
+                        color: Color.mSurfaceVariant
+                        radius: Style.radiusS
+                        border.width: Style.borderS
+                        border.color: Color.mOutline
+                        implicitHeight: ethInfoGrid.implicitHeight + Style.marginS * 2
+                        clip: true
+                        Layout.topMargin: Style.marginXS
+
+                        // Grid/List toggle
+                        NIconButton {
+                            anchors.top: parent.top
+                            anchors.right: parent.right
+                            anchors.margins: Style.marginS
+                            icon: ethernetDetailsGrid ? "layout-list" : "layout-grid"
+                            tooltipText: ethernetDetailsGrid ? I18n.tr("tooltips.list-view") : I18n.tr("tooltips.grid-view")
+                            onClicked: {
+                                ethernetDetailsGrid = !ethernetDetailsGrid;
+                                if (Settings.data && Settings.data.ui) {
+                                    Settings.data.ui.wifiDetailsViewMode = ethernetDetailsGrid ? "grid" : "list";
+                                }
+                            }
+                            z: 1
+                        }
+
+                        GridLayout {
+                            id: ethInfoGrid
+                            anchors.fill: parent
+                            anchors.margins: Style.marginS
+                            anchors.rightMargin: Style.baseWidgetSize
+                            columns: ethernetDetailsGrid ? 2 : 1
+                            columnSpacing: Style.marginM
+                            rowSpacing: Style.marginXS
+                            onColumnsChanged: {
+                                if (ethInfoGrid.forceLayout) {
+                                    Qt.callLater(function () {
+                                        ethInfoGrid.forceLayout();
+                                    });
+                                }
+                            }
+
+                            // Interface name
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: Style.marginXS
+                                NIcon {
+                                    icon: "ethernet"
+                                    pointSize: Style.fontSizeXS
+                                    color: Color.mOnSurface
+                                    Layout.alignment: Qt.AlignVCenter
+                                    MouseArea {
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    onEntered: TooltipService.show(parent, I18n.tr("wifi.panel.interface"))
+                                    onExited: TooltipService.hide()
+                                    }
+                                }
+                                NText {
+                                    text: (NetworkService.activeEthernetDetails.ifname && NetworkService.activeEthernetDetails.ifname.length > 0) ? NetworkService.activeEthernetDetails.ifname : (NetworkService.activeEthernetIf || "-")
+                                    pointSize: Style.fontSizeXS
+                                    color: Color.mOnSurface
+                                    Layout.fillWidth: true
+                                    Layout.alignment: Qt.AlignVCenter
+                                    wrapMode: ethernetDetailsGrid ? Text.NoWrap : Text.WrapAtWordBoundaryOrAnywhere
+                                    elide: ethernetDetailsGrid ? Text.ElideRight : Text.ElideNone
+                                    maximumLineCount: ethernetDetailsGrid ? 1 : 6
+                                    clip: true
+
+                                    // Click-to-copy Ethernet interface name
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        // Guard against undefined by normalizing to empty strings
+                                        enabled: ((NetworkService.activeEthernetDetails.ifname || "").length > 0) || ((NetworkService.activeEthernetIf || "").length > 0)
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onEntered: TooltipService.show(parent, I18n.tr("tooltips.copy-address"))
+                                        onExited: TooltipService.hide()
+                                        onClicked: {
+                                            const value = (NetworkService.activeEthernetDetails.ifname && NetworkService.activeEthernetDetails.ifname.length > 0) ? NetworkService.activeEthernetDetails.ifname : (NetworkService.activeEthernetIf || "");
+                                            if (value.length > 0) {
+                                                Quickshell.execDetached(["wl-copy", value]);
+                                                ToastService.showNotice(I18n.tr("control-center.wifi.label-ethernet"), I18n.tr("toast.bluetooth.address-copied"), "ethernet");
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Internet connectivity
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: Style.marginXS
+                                NIcon {
+                                    // If the selected Ethernet interface is disconnected, show an explicit disconnected state
+                                    icon: modelData.connected ? (NetworkService.internetConnectivity ? "world" : "world-off") : "world-off"
+                                    pointSize: Style.fontSizeXS
+                                    color: modelData.connected ? (NetworkService.internetConnectivity ? Color.mOnSurface : Color.mError) : Color.mError
+                                    Layout.alignment: Qt.AlignVCenter
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        onEntered: TooltipService.show(parent, I18n.tr("wifi.panel.internet-status"))
+                                        onExited: TooltipService.hide()
+                                    }
+                                }
+                                NText {
+                                    // Show "Disconnected" when the interface itself is down
+                                    text: modelData.connected ? (NetworkService.internetConnectivity ? I18n.tr("wifi.panel.internet-connected") : I18n.tr("wifi.panel.internet-limited")) : I18n.tr("common.disconnected")
+                                    pointSize: Style.fontSizeXS
+                                    color: modelData.connected ? (NetworkService.internetConnectivity ? Color.mOnSurface : Color.mError) : Color.mError
+                                    Layout.fillWidth: true
+                                    Layout.alignment: Qt.AlignVCenter
+                                    wrapMode: ethernetDetailsGrid ? Text.NoWrap : Text.WrapAtWordBoundaryOrAnywhere
+                                    elide: ethernetDetailsGrid ? Text.ElideRight : Text.ElideNone
+                                    maximumLineCount: ethernetDetailsGrid ? 1 : 6
+                                    clip: true
+                                }
+                            }
+
+                            // Link speed
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: Style.marginXS
+                                NIcon {
+                                    icon: "gauge"
+                                    pointSize: Style.fontSizeXS
+                                    color: Color.mOnSurface
+                                    Layout.alignment: Qt.AlignVCenter
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        onEntered: TooltipService.show(parent, I18n.tr("wifi.panel.link-speed"))
+                                        onExited: TooltipService.hide()
+                                    }
+                                }
+                                NText {
+                                    text: (NetworkService.activeEthernetDetails.speed && NetworkService.activeEthernetDetails.speed.length > 0) ? NetworkService.activeEthernetDetails.speed : "-"
+                                    pointSize: Style.fontSizeXS
+                                    color: Color.mOnSurface
+                                    Layout.fillWidth: true
+                                    Layout.alignment: Qt.AlignVCenter
+                                    wrapMode: ethernetDetailsGrid ? Text.NoWrap : Text.WrapAtWordBoundaryOrAnywhere
+                                    elide: ethernetDetailsGrid ? Text.ElideRight : Text.ElideNone
+                                    maximumLineCount: ethernetDetailsGrid ? 1 : 6
+                                    clip: true
+                                }
+                            }
+
+                            // IPv4 address
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: Style.marginXS
+                                NIcon {
+                                    icon: "network"
+                                    pointSize: Style.fontSizeXS
+                                    color: Color.mOnSurface
+                                    Layout.alignment: Qt.AlignVCenter
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        onEntered: TooltipService.show(parent, I18n.tr("wifi.panel.ipv4"))
+                                        onExited: TooltipService.hide()
+                                    }
+                                }
+                                NText {
+                                    text: NetworkService.activeEthernetDetails.ipv4 || "-"
+                                    pointSize: Style.fontSizeXS
+                                    color: Color.mOnSurface
+                                    Layout.fillWidth: true
+                                    Layout.alignment: Qt.AlignVCenter
+                                    wrapMode: ethernetDetailsGrid ? Text.NoWrap : Text.WrapAtWordBoundaryOrAnywhere
+                                    elide: ethernetDetailsGrid ? Text.ElideRight : Text.ElideNone
+                                    maximumLineCount: ethernetDetailsGrid ? 1 : 6
+                                    clip: true
+
+                                    // Click-to-copy Ethernet IPv4 address
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        // Normalize to string to avoid undefined -> bool assignment warnings
+                                        enabled: (NetworkService.activeEthernetDetails.ipv4 || "").length > 0
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onEntered: TooltipService.show(parent, I18n.tr("tooltips.copy-address"))
+                                        onExited: TooltipService.hide()
+                                        onClicked: {
+                                            const value = NetworkService.activeEthernetDetails.ipv4 || "";
+                                            if (value.length > 0) {
+                                                Quickshell.execDetached(["wl-copy", value]);
+                                                ToastService.showNotice(I18n.tr("control-center.wifi.label-ethernet"), I18n.tr("toast.bluetooth.address-copied"), "ethernet");
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Gateway
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: Style.marginXS
+                                NIcon {
+                                    icon: "router"
+                                    pointSize: Style.fontSizeXS
+                                    color: Color.mOnSurface
+                                    Layout.alignment: Qt.AlignVCenter
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        onEntered: TooltipService.show(parent, I18n.tr("common.gateway"))
+                                        onExited: TooltipService.hide()
+                                    }
+                                }
+                                NText {
+                                    text: NetworkService.activeEthernetDetails.gateway4 || "-"
+                                    pointSize: Style.fontSizeXS
+                                    color: Color.mOnSurface
+                                    Layout.fillWidth: true
+                                    Layout.alignment: Qt.AlignVCenter
+                                    wrapMode: ethernetDetailsGrid ? Text.NoWrap : Text.WrapAtWordBoundaryOrAnywhere
+                                    elide: ethernetDetailsGrid ? Text.ElideRight : Text.ElideNone
+                                    maximumLineCount: ethernetDetailsGrid ? 1 : 6
+                                    clip: true
+                                }
+                            }
+
+                            // DNS
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: Style.marginXS
+                                NIcon {
+                                    icon: "world"
+                                    pointSize: Style.fontSizeXS
+                                    color: Color.mOnSurface
+                                    Layout.alignment: Qt.AlignVCenter
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        onEntered: TooltipService.show(parent, I18n.tr("wifi.panel.dns"))
+                                        onExited: TooltipService.hide()
+                                    }
+                                }
+                                NText {
+                                    text: NetworkService.activeEthernetDetails.dns || "-"
+                                    pointSize: Style.fontSizeXS
+                                    color: Color.mOnSurface
+                                    Layout.fillWidth: true
+                                    Layout.alignment: Qt.AlignVCenter
+                                    wrapMode: ethernetDetailsGrid ? Text.NoWrap : Text.WrapAtWordBoundaryOrAnywhere
+                                    elide: ethernetDetailsGrid ? Text.ElideRight : Text.ElideNone
+                                    maximumLineCount: ethernetDetailsGrid ? 1 : 6
+                                    clip: true
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+
+
+}

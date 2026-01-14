@@ -1,0 +1,2 @@
+module Services
+singleton LoNetworkService 1.0 loNetworkService.qml
