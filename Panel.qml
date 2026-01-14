@@ -8,6 +8,7 @@ import qs.Services.Networking
 import qs.Services.UI
 import qs.Widgets
 import "component"
+import "services"
 
 Item {
   id: root
@@ -547,20 +548,14 @@ Item {
 
               // Interfaces list TODO
               InterfaceList {
-                  // id: ethernetInterfacesList
+                  id: ethernetInterfacesList
                   model: NetworkService.ethernetInterfaces || []
-                  // expandedIfname: ethernetInfoExpanded ? NetworkService.activeEthernetIf : ""
-                  // detailsGrid: root.ethernetDetailsGrid
-                  
-                  // onInfoRequested: ifname => {
-                  //     NetworkService.activeEthernetIf = ifname;
-                  //     ethernetInfoExpanded = true;
-                  //     NetworkService.refreshActiveEthernetDetails();
-                  // }
-                  
-                  // onInfoClosed: {
-                  //     ethernetInfoExpanded = false;
-                  // }
+                  onInterfaceConnect: (ifname) => {
+                                      LoNetworkService.toggleinterfaceConnect(ifname,true);
+                                     }
+                  onInterfaceDisconnect: (ifname) => {
+                                      LoNetworkService.toggleinterfaceConnect(ifname,false);
+                                     }
               }
             }
           }

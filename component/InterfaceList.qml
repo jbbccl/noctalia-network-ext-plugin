@@ -12,6 +12,9 @@ Item {
     property string label: ""
     property var model: []
 
+    signal interfaceConnect(string ifname)
+    signal interfaceDisconnect(string ifname)
+
     Layout.fillWidth: true
     Layout.preferredHeight: ethIfacesList.implicitHeight + Style.marginM * 2
     visible: root.model.length > 0
@@ -72,6 +75,16 @@ Item {
                                 Layout.fillWidth: true
                             }
 
+                            // TODO  DEBUG 调试用，显示状态 
+                            NText {
+                                text: modelData.state
+                                pointSize: Style.fontSizeM
+                                font.weight: modelData.connected ? Style.fontWeightBold : Style.fontWeightMedium
+                                color: Color.mOnSurface
+                                elide: Text.ElideRight
+                                Layout.fillWidth: true
+                            }
+                            
                             RowLayout {
                                 spacing: Style.marginXS
 
@@ -93,9 +106,31 @@ Item {
                                 }
                             }
                         }
+                        //TODO
+                        // modelData item: { ifname: string, state: string, connected: bool }
+                        //连接按钮
+                        NButton {
+                            visible: !modelData.connected && modelData.state != "unmanaged"
+                            text: I18n.tr("common.connect")
+                            outlined: !hovered
+                            fontSize: Style.fontSizeXS
+                            enabled: !NetworkService.connecting
+                            onClicked: root.interfaceConnect(modelData.ifname)
+                        }
 
+                        //断开连接按钮
+                        NButton {
+                            visible: modelData.connected && modelData.state == "connected"
+                            text: I18n.tr("common.disconnect")
+                            outlined: !hovered
+                            fontSize: Style.fontSizeXS
+                            backgroundColor: Color.mError
+                            onClicked: root.interfaceDisconnect(modelData.ifname)
+                        }
+                        
                         // Info button on the right
                         NIconButton {
+                            // visible: modelData.state != "unmanaged" //TODO 未托管的显示有bug
                             icon: "info-circle"
                             baseSize: Style.baseWidgetSize * 0.7
                             tooltipText: I18n.tr("common.info")//信息
@@ -116,21 +151,21 @@ Item {
                     }
 
                     // Click handling without anchors in a Layout-managed item
-                    TapHandler {
-                        target: ethHeaderRow
-                        onTapped: {
-                            if (NetworkService.activeEthernetIf === modelData.ifname && ethernetInfoExpanded) {
-                                ethernetInfoExpanded = false;
-                                return;
-                            }
-                            if (NetworkService.activeEthernetIf !== modelData.ifname) {
-                                NetworkService.activeEthernetIf = modelData.ifname;
-                                NetworkService.activeEthernetDetailsTimestamp = 0;
-                            }
-                            ethernetInfoExpanded = true;
-                            NetworkService.refreshActiveEthernetDetails();
-                        }
-                    }
+                    // TapHandler {
+                    //     target: ethHeaderRow
+                    //     onTapped: {
+                    //         if (NetworkService.activeEthernetIf === modelData.ifname && ethernetInfoExpanded) {
+                    //             ethernetInfoExpanded = false;
+                    //             return;
+                    //         }
+                    //         if (NetworkService.activeEthernetIf !== modelData.ifname) {
+                    //             NetworkService.activeEthernetIf = modelData.ifname;
+                    //             NetworkService.activeEthernetDetailsTimestamp = 0;
+                    //         }
+                    //         ethernetInfoExpanded = true;
+                    //         NetworkService.refreshActiveEthernetDetails();
+                    //     }
+                    // }
 
                     // Inline Ethernet details
                     Rectangle {

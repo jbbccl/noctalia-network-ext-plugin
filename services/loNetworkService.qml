@@ -10,6 +10,8 @@ import qs.Services.System
 import qs.Services.UI
 import qs.Widgets
 
+// 修改此文件要重新运行 NOCTALIA_DEBUG=1 qs -c noctalia-shell
+// WARM：... Not a function
 Singleton {
     id: root
     // 属性代理
@@ -20,36 +22,60 @@ Singleton {
         return NetworkService.signalIcon(strength, connected);
     }
 
-    // 添加
+    // ===========属性=============
+    property var _pendingCallback: null
+
+    // ++function=================================================
+
     function setInternetEnabled() {
-        Logger.i(NetworkService.ethernetConnected);
-        if (!ProgramCheckerService.nmcliAvailable)
-            return;
-        internetStateEnableProcess.running = true;
-
+      if (!ProgramCheckerService.nmcliAvailable)
+        return;
+      runCommand(["nmcli", "networking", NetworkService.ethernetConnected ? "off" : "on"], NetworkService.refreshEthernet);
     }
-    
+
+    function toggleinterfaceConnect(ifname , isConnect){
+      if (!ProgramCheckerService.nmcliAvailable)
+        return;
+      runCommand(["nmcli", "device", isConnect ? "connect" : "disconnect" , ifname], NetworkService.refreshEthernet);
+    }
+
+
+    function runCommand(cmdArgs, callback) {
+        if (commandRunner.running) {
+            console.warn("Command runner busy, ignoring:", cmdArgs);
+            return ;
+        }
+        root._pendingCallback = callback;
+        commandRunner.command = cmdArgs;
+        commandRunner.running = true;
+    }
+
+
+    // ==PROCESS===================================================
     Process {
-    id: internetStateEnableProcess
-    running: false
-    command: ["nmcli", "networking", NetworkService.ethernetConnected ? "off" : "on"]
+      id: commandRunner
 
-    stdout: StdioCollector {
-      onStreamFinished: {
-        Logger.i("Network", "Internet state change command executed", NetworkService.ethernetConnected ? "off" : "on");
-        // Re-check the state to ensure it's in sync
-        // TODO
-        NetworkService.refreshEthernet();
+      // onExited: {
+      // }
+
+      stdout: StdioCollector {
+        onStreamFinished: {
+          Logger.i("bNet", "commandRunner executed: " , commandRunner.command);
+          if (root._pendingCallback) {
+              root._pendingCallback();
+              root._pendingCallback = null;
+          }
+        }
       }
-    }
 
-    stderr: StdioCollector {
-      onStreamFinished: {
-        if (text.trim()) {
-          Logger.w("Network", "Error changing Internet state: " + text);
+      stderr: StdioCollector {
+        onStreamFinished: {
+          if (text.trim()) {
+            Logger.w("bNet", "Error commandRunner" + text);
+          }
         }
       }
     }
-  }
+
 }
 

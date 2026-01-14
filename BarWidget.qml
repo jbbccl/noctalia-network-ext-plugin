@@ -65,7 +65,6 @@ Item {
                    if (popupMenuWindow) {
                      popupMenuWindow.close();
                    }
-                    //TODO
                    if (action === "toggle-wifi") {
                     NetworkService.setWifiEnabled(!Settings.data.network.wifiEnabled);
                    } else if (action === "toggle-eth") {
@@ -122,8 +121,6 @@ Item {
     forceClose: isBarVertical || root.displayMode === "alwaysHide" || text === ""
     onClicked: {
       root.openPanel();
-      // var panel = PanelService.getPanel("networkPanel", screen);
-      // panel?.toggle(this);
     }
     onRightClicked: {
       var popupMenuWindow = PanelService.getPopupMenuWindow(screen);
@@ -165,7 +162,6 @@ Item {
     if (pluginApi) {
         var result = pluginApi.openPanel(root.screen, topRightAnchor);
         // Each item: { ifname: string, state: string, connected: bool }
-        Logger.i("bNet", NetworkService.ethernetInterfaces[0].ifname);
         Logger.i("bNet", "OpenPanel result:", result);
     } else {
         Logger.e("bNet", "PluginAPI is null");

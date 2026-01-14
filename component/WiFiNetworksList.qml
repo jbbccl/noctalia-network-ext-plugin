@@ -260,14 +260,14 @@ NBox {
                   }
                 }
               }
-
+              //忘记连接按钮
               NIconButton {
                 visible: (modelData.existing || modelData.cached) && !modelData.connected && NetworkService.connectingTo !== modelData.ssid && NetworkService.forgettingNetwork !== modelData.ssid && NetworkService.disconnectingFrom !== modelData.ssid
                 icon: "trash"
                 tooltipText: I18n.tr("tooltips.forget-network")
                 onClicked: root.forgetRequested(modelData.ssid)
               }
-
+              //连接按钮
               NButton {
                 visible: !modelData.connected && NetworkService.connectingTo !== modelData.ssid && root.passwordSsid !== modelData.ssid && NetworkService.forgettingNetwork !== modelData.ssid && NetworkService.disconnectingFrom !== modelData.ssid
                 text: {
@@ -288,7 +288,7 @@ NBox {
                   }
                 }
               }
-
+              //断开连接按钮
               NButton {
                 visible: modelData.connected && NetworkService.disconnectingFrom !== modelData.ssid
                 text: I18n.tr("common.disconnect")
