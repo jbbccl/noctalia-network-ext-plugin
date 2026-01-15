@@ -13,13 +13,10 @@ import "services"
 Item {
   id: root
 
-  // Plugin API (injected by PluginPanelSlot)
   property var pluginApi: null
   
-  // Screen reference (should be provided by plugin system)
-  property ShellScreen screen
+  // readonly property ShellScreen screen: pluginApi?.panelOpenScreen || null
   
-  // SmartPanel properties (required for panel behavior)
   readonly property var geometryPlaceholder: panelContainer
   readonly property bool allowAttach: true
   
@@ -193,7 +190,7 @@ Item {
             color: Color.mOnSurface
             Layout.fillWidth: true
           }
-
+          //wifi开关
           NToggle {
             id: wifiSwitch
             visible: panelViewMode === "wifi"
@@ -220,10 +217,7 @@ Item {
             tooltipText: I18n.tr("common.close")
             baseSize: Style.baseWidgetSize * 0.8
             onClicked: {
-              // Use plugin API to close panel
-              if (pluginApi && screen) {
-                pluginApi.closePanel(screen);
-              }
+                pluginApi.closePanel(root.screen)
             }
           }
         }
@@ -550,13 +544,12 @@ Item {
               InterfaceList {
                   id: ethernetInterfacesList
                   model: NetworkService.ethernetInterfaces || []
-                  onInterfaceConnect: (ifname) => {
-                                      LoNetworkService.toggleinterfaceConnect(ifname,true);
-                                     }
-                  onInterfaceDisconnect: (ifname) => {
-                                      LoNetworkService.toggleinterfaceConnect(ifname,false);
+                  onToggleInterfaceConnect: (ifname, isConnect) => {
+                                      LoNetworkService.toggleinterfaceConnect(ifname, isConnect);
                                      }
               }
+              //这里加一个信息
+              
             }
           }
         }

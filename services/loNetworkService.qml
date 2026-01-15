@@ -23,6 +23,7 @@ Singleton {
     }
 
     // ===========属性============
+    //property bool isNetworkingEnabled: true
     property var _pendingCallback: null
 
     // ++function=================
@@ -31,6 +32,7 @@ Singleton {
       if (!ProgramCheckerService.nmcliAvailable)
         return;
       //TODO 不应该用NetworkService.ethernetConnected
+      //Logger.i("bNet","networkConnectivity",NetworkService.networkConnectivity)
       runCommand(["nmcli", "networking", NetworkService.ethernetConnected ? "off" : "on"], NetworkService.refreshEthernet);
     }
 
@@ -56,9 +58,6 @@ Singleton {
     Process {
       id: commandRunner
 
-      // onExited: {
-      // }
-
       stdout: StdioCollector {
         onStreamFinished: {
           Logger.i("bNet", "commandRunner executed: " , commandRunner.command);
@@ -77,6 +76,8 @@ Singleton {
         }
       }
     }
+
+    
 
 }
 

@@ -33,8 +33,8 @@ Item {
     return {};
   }
 
-  readonly property bool isBarVertical: Settings.data.bar.position === "left" || Settings.data.bar.position === "right"
-  readonly property string displayMode: widgetSettings.displayMode !== undefined ? widgetSettings.displayMode : widgetMetadata.displayMode
+  // readonly property bool isBarVertical: Settings.data.bar.position === "left" || Settings.data.bar.position === "right"
+  // readonly property string displayMode: widgetSettings.displayMode !== undefined ? widgetSettings.displayMode : widgetMetadata.displayMode
 
   implicitWidth: pill.width
   implicitHeight: pill.height
@@ -61,18 +61,18 @@ Item {
     ]
 
     onTriggered: action => {
-                   var popupMenuWindow = PanelService.getPopupMenuWindow(screen);
-                   if (popupMenuWindow) {
-                     popupMenuWindow.close();
-                   }
-                   if (action === "toggle-wifi") {
-                    NetworkService.setWifiEnabled(!Settings.data.network.wifiEnabled);
-                   } else if (action === "toggle-eth") {
-                     LoNetworkService.setInternetEnabled();
-                   } else if (action === "widget-settings") {
-                     BarService.openWidgetSettings(screen, section, sectionWidgetIndex, widgetId, widgetSettings);
-                   }
-                 }
+                  var popupMenuWindow = PanelService.getPopupMenuWindow(screen);
+                    if (popupMenuWindow) {
+                      popupMenuWindow.close();
+                    }
+                    if (action === "toggle-wifi") {
+                      NetworkService.setWifiEnabled(!Settings.data.network.wifiEnabled);
+                    } else if (action === "toggle-eth") {
+                      LoNetworkService.setInternetEnabled();
+                    } else if (action === "widget-settings") {
+                    BarService.openWidgetSettings(screen, section, sectionWidgetIndex, widgetId, widgetSettings);
+                  }
+                }
   }
 
   BarPill {
@@ -116,9 +116,9 @@ Item {
         return "error";
       }
     }
-    autoHide: false
-    forceOpen: !isBarVertical && root.displayMode === "alwaysShow"
-    forceClose: isBarVertical || root.displayMode === "alwaysHide" || text === ""
+    // autoHide: false
+    // forceOpen: !isBarVertical && root.displayMode === "alwaysShow"
+    // forceClose: isBarVertical || root.displayMode === "alwaysHide" || text === ""
     onClicked: {
       root.openPanel();
     }
@@ -160,19 +160,11 @@ Item {
 
   function openPanel() {
     if (pluginApi) {
-        var result = pluginApi.openPanel(root.screen, topRightAnchor);
-        // Each item: { ifname: string, state: string, connected: bool }
+        var result = pluginApi.openPanel(root.screen, root);
         Logger.i("bNet", "OpenPanel result:", result);
     } else {
         Logger.e("bNet", "PluginAPI is null");
     }
   }
-  Item {
-    id: topRightAnchor
-    x: 10 //screen ? screen.width -10 : 0
-    y: 10
-    width: 1
-    height: 1
-    visible: false
-  }
+
 }

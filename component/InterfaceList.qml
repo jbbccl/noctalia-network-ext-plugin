@@ -13,8 +13,7 @@ Item {
     property string label: ""
     property var model: []
 
-    signal interfaceConnect(string ifname)
-    signal interfaceDisconnect(string ifname)
+    signal toggleInterfaceConnect(string ifname,bool isConnect)
 
     Layout.fillWidth: true
     Layout.preferredHeight: ethIfacesList.implicitHeight + Style.marginM * 2
@@ -32,6 +31,8 @@ Item {
             delegate: NBox {
                 id: ethItem
 
+                visible: modelData.state != "unmanaged"
+                
                 Layout.fillWidth: true
                 Layout.leftMargin: Style.marginXS
                 Layout.rightMargin: Style.marginXS
@@ -108,7 +109,7 @@ Item {
                             enabled: !NetworkService.connecting
                             onClicked: {
                                 modelData.state="t"
-                                root.interfaceConnect(modelData.ifname)
+                                root.toggleInterfaceConnect(modelData.ifname,true)
                                 }
                         }
 
@@ -121,7 +122,7 @@ Item {
                             backgroundColor: Color.mError
                             onClicked: {
                                 modelData.state="t"
-                                root.interfaceDisconnect(modelData.ifname)
+                                root.toggleInterfaceConnect(modelData.ifname,false)
                                 }
                         }
 
