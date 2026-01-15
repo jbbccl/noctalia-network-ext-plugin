@@ -6,6 +6,7 @@ import qs.Commons
 import qs.Services.Networking
 import qs.Services.UI
 import qs.Widgets
+
 Item {
     id: root
 
@@ -68,16 +69,6 @@ Item {
 
                             NText {
                                 text: modelData.ifname
-                                pointSize: Style.fontSizeM
-                                font.weight: modelData.connected ? Style.fontWeightBold : Style.fontWeightMedium
-                                color: Color.mOnSurface
-                                elide: Text.ElideRight
-                                Layout.fillWidth: true
-                            }
-
-                            // TODO  DEBUG 调试用，显示状态 
-                            NText {
-                                text: modelData.state
                                 pointSize: Style.fontSizeM
                                 font.weight: modelData.connected ? Style.fontWeightBold : Style.fontWeightMedium
                                 color: Color.mOnSurface
@@ -151,23 +142,23 @@ Item {
                     }
 
                     // Click handling without anchors in a Layout-managed item
-                    // TapHandler {
-                    //     target: ethHeaderRow
-                    //     onTapped: {
-                    //         if (NetworkService.activeEthernetIf === modelData.ifname && ethernetInfoExpanded) {
-                    //             ethernetInfoExpanded = false;
-                    //             return;
-                    //         }
-                    //         if (NetworkService.activeEthernetIf !== modelData.ifname) {
-                    //             NetworkService.activeEthernetIf = modelData.ifname;
-                    //             NetworkService.activeEthernetDetailsTimestamp = 0;
-                    //         }
-                    //         ethernetInfoExpanded = true;
-                    //         NetworkService.refreshActiveEthernetDetails();
-                    //     }
-                    // }
+                    TapHandler {
+                        target: ethHeaderRow
+                        onTapped: {
+                            if (NetworkService.activeEthernetIf === modelData.ifname && ethernetInfoExpanded) {
+                                ethernetInfoExpanded = false;
+                                return;
+                            }
+                            if (NetworkService.activeEthernetIf !== modelData.ifname) {
+                                NetworkService.activeEthernetIf = modelData.ifname;
+                                NetworkService.activeEthernetDetailsTimestamp = 0;
+                            }
+                            ethernetInfoExpanded = true;
+                            NetworkService.refreshActiveEthernetDetails();
+                        }
+                    }
 
-                    // Inline Ethernet details
+                    // Inline Ethernet details TODO使用ip获取想象
                     Rectangle {
                         id: ethInfoInline
                         visible: ethernetInfoExpanded && NetworkService.activeEthernetIf === modelData.ifname

@@ -22,14 +22,15 @@ Singleton {
         return NetworkService.signalIcon(strength, connected);
     }
 
-    // ===========属性=============
+    // ===========属性============
     property var _pendingCallback: null
 
-    // ++function=================================================
+    // ++function=================
 
     function setInternetEnabled() {
       if (!ProgramCheckerService.nmcliAvailable)
         return;
+      //TODO 不应该用NetworkService.ethernetConnected
       runCommand(["nmcli", "networking", NetworkService.ethernetConnected ? "off" : "on"], NetworkService.refreshEthernet);
     }
 
@@ -51,7 +52,7 @@ Singleton {
     }
 
 
-    // ==PROCESS===================================================
+    // ==PROCESS===================
     Process {
       id: commandRunner
 
