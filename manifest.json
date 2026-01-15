@@ -1,12 +1,12 @@
 {
-  "id": "bNet",
-  "name": "bNet",
+  "id": "Networkb",
+  "name": "Networkb",
   "version": "1.0.0",
   "minNoctaliaVersion": "3.6.0",
   "author": "Your Name",
   "license": "MIT",
-  "repository": "https://github.com/yourusername/noctalia-plugins",
-  "description": "A simple example plugin",
+  "repository": "https://github.com/jbbccl/noctalia-network-ext-plugin",
+  "description": "network pannel with disconnect interface button",
   "entryPoints": {
     "Main": "Main.qml",
     "barWidget": "BarWidget.qml",
