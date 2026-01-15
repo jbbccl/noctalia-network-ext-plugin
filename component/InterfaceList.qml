@@ -101,12 +101,15 @@ Item {
                         // modelData item: { ifname: string, state: string, connected: bool }
                         //连接按钮
                         NButton {
-                            visible: !modelData.connected && modelData.state != "unmanaged"
+                            visible: !modelData.connected && modelData.state != "unmanaged" && modelData.state != "t"
                             text: I18n.tr("common.connect")
                             outlined: !hovered
                             fontSize: Style.fontSizeXS
                             enabled: !NetworkService.connecting
-                            onClicked: root.interfaceConnect(modelData.ifname)
+                            onClicked: {
+                                modelData.state="t"
+                                root.interfaceConnect(modelData.ifname)
+                                }
                         }
 
                         //断开连接按钮
@@ -116,9 +119,20 @@ Item {
                             outlined: !hovered
                             fontSize: Style.fontSizeXS
                             backgroundColor: Color.mError
-                            onClicked: root.interfaceDisconnect(modelData.ifname)
+                            onClicked: {
+                                modelData.state="t"
+                                root.interfaceDisconnect(modelData.ifname)
+                                }
                         }
-                        
+
+                        //按钮很忙 感觉不需要动画
+                        // NBusyIndicator {
+                        //     visible: modelData.state == "t"
+                        //     running: visible
+                        //     color: Color.mPrimary
+                        //     size: Style.baseWidgetSize * 0.5
+                        // }
+
                         // Info button on the right
                         NIconButton {
                             // visible: modelData.state != "unmanaged" //TODO 未托管的显示有bug
