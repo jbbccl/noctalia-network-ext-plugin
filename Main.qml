@@ -7,8 +7,8 @@ Item {
 
     property var pluginApi: null
 
-    readonly property bool hideBackground: pluginApi?.pluginSettings?.hideBackground ?? false
-    //调用pluginApi.pluginSettings.hideBackground
+    // readonly property bool InternetEnabled: pluginApi?.pluginSettings?.InternetEnabled ?? true
+    //调用pluginApi.pluginSettings.InternetEnabled
     // property real cpuUsage: SystemStatService.cpuUsage
     // readonly property bool isRunning: cpuUsage >= minimumThreshold
 

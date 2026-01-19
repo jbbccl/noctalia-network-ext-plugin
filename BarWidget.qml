@@ -49,9 +49,9 @@ Item {
         "icon": Settings.data.network.wifiEnabled ? "wifi-off" : "wifi"
       },
       {
-        "label": NetworkService.ethernetConnected ? pluginApi.tr("actions.disable-eth") : pluginApi.tr("actions.enable-eth") ,
+        "label": LoNetworkService.isNetworkingEnabled ? pluginApi.tr("actions.disable-eth") : pluginApi.tr("actions.enable-eth") ,
         "action": "toggle-eth",
-        "icon": NetworkService.ethernetConnected ? "ethernet-off" : "ethernet"   
+        "icon": LoNetworkService.isNetworkingEnabled ? "ethernet-off" : "ethernet"   
       },
       {
         "label": I18n.tr("actions.widget-settings"),
@@ -68,7 +68,7 @@ Item {
                     if (action === "toggle-wifi") {
                       NetworkService.setWifiEnabled(!Settings.data.network.wifiEnabled);
                     } else if (action === "toggle-eth") {
-                      LoNetworkService.setInternetEnabled();
+                      LoNetworkService.toggleNetworkingEnabled();
                     } else if (action === "widget-settings") {
                     BarService.openWidgetSettings(screen, section, sectionWidgetIndex, widgetId, widgetSettings);
                   }

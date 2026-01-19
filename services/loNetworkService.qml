@@ -23,17 +23,20 @@ Singleton {
     }
 
     // ===========属性============
-    //property bool isNetworkingEnabled: true
+    property bool isNetworkingEnabled: true
+    property var pluginApi: null
     property var _pendingCallback: null
+    // property var allInterfacesInfo: ([])
 
     // ++function=================
-
-    function setInternetEnabled() {
+  
+    function toggleNetworkingEnabled() {
       if (!ProgramCheckerService.nmcliAvailable)
         return;
       //TODO 不应该用NetworkService.ethernetConnected
-      //Logger.i("bNet","networkConnectivity",NetworkService.networkConnectivity)
-      runCommand(["nmcli", "networking", NetworkService.ethernetConnected ? "off" : "on"], NetworkService.refreshEthernet);
+      runCommand(["nmcli", "networking", isNetworkingEnabled ? "off" : "on"], ()=>{
+        checkNetworkingEnabled.running = true;
+      });
     }
 
     function toggleinterfaceConnect(ifname , isConnect){
@@ -42,17 +45,16 @@ Singleton {
       runCommand(["nmcli", "device", isConnect ? "connect" : "disconnect" , ifname], NetworkService.refreshEthernet);
     }
 
-
+    // ===
     function runCommand(cmdArgs, callback) {
         if (commandRunner.running) {
-            console.warn("Command runner busy, ignoring:", cmdArgs);
+            Logger.w("bNet", "Command runner busy, ignoring:", cmdArgs);
             return ;
         }
         root._pendingCallback = callback;
         commandRunner.command = cmdArgs;
         commandRunner.running = true;
     }
-
 
     // ==PROCESS===================
     Process {
@@ -72,6 +74,25 @@ Singleton {
         onStreamFinished: {
           if (text.trim()) {
             Logger.w("bNet", "Error commandRunner" + text);
+          }
+        }
+      }
+    }
+
+    Process {
+      id: checkNetworkingEnabled
+      command: ["nmcli", "networking"]
+      running: false
+
+      stdout: StdioCollector {
+        onStreamFinished: {
+            isNetworkingEnabled = (text[0] == "e") ? true : false;
+          }
+        }
+      stderr: StdioCollector {
+        onStreamFinished: {
+          if (text.trim()) {
+            Logger.w("bNet", "Error checkNetworkingEnabled" + text);
           }
         }
       }
